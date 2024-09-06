@@ -4263,13 +4263,15 @@ class ZaloAPI(object):
 				
 				except KeyboardInterrupt:
 					self._condition.set()
-					ws.close()
 					print("\x1b[1K")
 					logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
 					pid = os.getpid()
 					os.kill(pid, signal.SIGTERM)
 				
-				except (websockets.ConnectionClosed, websockets.ConnectionClosedOK) as e:
+				except websockets.ConnectionClosedOK:
+					self._condition.set()
+				
+				except websockets.ConnectionClosed as e:
 					self._listening = False
 					self.onErrorCallBack(e)
 					if self.run_forever:
@@ -4284,7 +4286,6 @@ class ZaloAPI(object):
 				
 				except Exception as e:
 					self._condition.set()
-					ws.close()
 					self._listening = False
 					self.onErrorCallBack(e)
 					if self.run_forever:
