@@ -4101,7 +4101,6 @@ class ZaloAPI(object):
 			await self.onListening()
 			self._listening = True
 			
-			await ws.pong()
 			while not self._condition.is_set():
 				try:
 					data = await ws.recv()
@@ -4220,7 +4219,10 @@ class ZaloAPI(object):
 					pid = os.getpid()
 					os.kill(pid, signal.SIGTERM)
 				
-				except (websockets.ConnectionClosed, websockets.ConnectionClosedOK) as e:
+				except websockets.ConnectionClosedOK:
+					self._condition.set()
+				
+				except websockets.ConnectionClosed as e:
 					self._listening = False
 					await self.onErrorCallBack(e)
 					if self.run_forever:
