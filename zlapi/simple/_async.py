@@ -4337,7 +4337,10 @@ class ZaloAPI(object):
 					pid = os.getpid()
 					os.kill(pid, signal.SIGTERM)
 				
-				except (websockets.ConnectionClosed, websockets.ConnectionClosedOK) as e:
+				except websockets.ConnectionClosedOK:
+					self._condition.set()
+				
+				except websockets.ConnectionClosed as e:
 					self._listening = False
 					await self.on_error_callback(e)
 					if self.run_forever:
