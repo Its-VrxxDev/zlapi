@@ -4115,11 +4115,8 @@ class ZaloAPI(object):
 	def _fix_recv(self):
 		old_timestamp = int(time.time())
 		time.sleep(50 * 60)
-		new_timestamp = int(time.time())
-		
-		if new_timestamp - old_timestamp >= 50 * 60:
-			self._start_fix = True
-			self._condition.set()
+		self._start_fix = True
+		self._condition.set()
 	
 	def _listen_ws(self, thread=False, reconnect=5):
 		self._condition.clear()
@@ -4263,6 +4260,7 @@ class ZaloAPI(object):
 				
 				except KeyboardInterrupt:
 					self._condition.set()
+					ws.close()
 					print("\x1b[1K")
 					logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
 					pid = os.getpid()
@@ -4270,22 +4268,11 @@ class ZaloAPI(object):
 				
 				except websockets.ConnectionClosedOK:
 					self._condition.set()
-				
-				except websockets.ConnectionClosed as e:
-					self._listening = False
-					self.onErrorCallBack(e)
-					if self.run_forever:
-						while not self._listening:
-							try:
-								logger.debug("Run forever mode is enabled, trying to reconnect...")
-								self._listen_ws(thread, reconnect)
-							except:
-								pass
-							
-							time.sleep(reconnect)
+					ws.close()
 				
 				except Exception as e:
 					self._condition.set()
+					ws.close()
 					self._listening = False
 					self.onErrorCallBack(e)
 					if self.run_forever:
