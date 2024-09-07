@@ -3460,7 +3460,7 @@ class ZaloAPI(object):
 				"totalSize": fileSize,
 				"width": width,
 				"height": height,
-				"msg": "",
+				"msg": "abcxyz",
 				"type": 1,
 				"ttl": ttl,
 				"thumb": str(thumbnailUrl),
@@ -4173,12 +4173,9 @@ class ZaloAPI(object):
 	
 	async def _fix_recv(self):
 		old_timestamp = int(time.time())
-		await asyncio.sleep(55 * 60)
-		new_timestamp = int(time.time())
-		
-		if new_timestamp - old_timestamp >= 55 * 60:
-			self._start_fix = True
-			self._condition.set()
+		await asyncio.sleep(50 * 60)
+		self._start_fix = True
+		self._condition.set()
 	
 	async def _listen_ws(self, thread=False, reconnect=5):
 		self._condition.clear()
@@ -4206,7 +4203,7 @@ class ZaloAPI(object):
 			"Cookie": raw_cookies
 		}
 		
-		async with connect(url, extra_headers=headers) as ws:
+		async with connect(url, extra_headers=headers, ping_timeout=None) as ws:
 			self.run_in_thread(self._fix_recv)
 			loop = asyncio.get_event_loop()
 			await self.on_listening()
@@ -4332,6 +4329,7 @@ class ZaloAPI(object):
 			
 				except asyncio.CancelledError:
 					self._condition.set()
+					await ws.close()
 					print("\x1b[1K")
 					logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
 					pid = os.getpid()
@@ -4339,22 +4337,11 @@ class ZaloAPI(object):
 				
 				except websockets.ConnectionClosedOK:
 					self._condition.set()
-				
-				except websockets.ConnectionClosed as e:
-					self._listening = False
-					await self.on_error_callback(e)
-					if self.run_forever:
-						while not self._listening:
-							try:
-								logger.debug("Run forever mode is enabled, trying to reconnect...")
-								await self._listen_ws(thread, reconnect)
-							except:
-								pass
-							
-							await asyncio.sleep(reconnect)
+					await ws.close()
 				
 				except Exception as e:
 					self._condition.set()
+					await ws.close()
 					self._listening = False
 					await self.on_error_callback(e)
 					if self.run_forever:
