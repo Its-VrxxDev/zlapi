@@ -181,7 +181,7 @@ imei = "<imei>"
 cookies = {} # Cookies Dict
 
 bot = ZaloAPI("<phone>", "<password>", imei=imei, session_cookies=cookies)
-# client.listen(type="...")
+# bot.listen(type="...")
 bot.listen()
 ```
 
