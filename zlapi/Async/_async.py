@@ -4219,7 +4219,10 @@ class ZaloAPI(object):
 				
 				except websockets.ConnectionClosedOK:
 					self._condition.set()
+				
+				except websockets.ConnectionClosedError:
 					await ws.close()
+					self._condition.set()
 				
 				except Exception as e:
 					self._condition.set()
