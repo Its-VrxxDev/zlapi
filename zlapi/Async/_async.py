@@ -2989,14 +2989,14 @@ class ZaloAPI(object):
 		"""
 		try:
 			async with aiohttp.ClientSession() as session:
-				async with session.get(videoUrl) as response:
+				async with session.head(videoUrl) as response:
 					if response.status == 200:
 						fileSize = int(response.headers.get("Content-Length", len(await response.read())))
 					else:
 						fileSize = 0
 		
-		except:
-			raise ZaloAPIException("Unable to get url content")
+		except Exception as e:
+			raise ZaloAPIException(f"Unable to get url content: {e}")
 		
 		params = {
 			"zpw_ver": 641,
