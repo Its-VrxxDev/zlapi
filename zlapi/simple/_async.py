@@ -3098,7 +3098,7 @@ class ZaloAPI(object):
 						fileSize = 0
 		
 		except Exception as e:
-			raise ZaloAPIException("Unable to get url content")
+			raise ZaloAPIException(f"Unable to get url content: {e}")
 		
 		params = {
 			"zpw_ver": 641,
