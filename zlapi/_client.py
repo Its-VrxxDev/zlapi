@@ -3018,14 +3018,14 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		try:
-			with self._state._session.get(videoUrl) as response:
+			with self._state._session.head(videoUrl) as response:
 				if response.status_code == 200:
 					fileSize = int(response.headers.get("Content-Length", len(response.content)))
 				else:
 					fileSize = 0
 				
-		except:
-			raise ZaloAPIException("Unable to get url content")
+		except Exception as e:
+			raise ZaloAPIException(f"Unable to get url content: {e}")
 			
 		params = {
 			"zpw_ver": 641,
