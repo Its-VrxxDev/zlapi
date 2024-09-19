@@ -38,7 +38,7 @@ class ZaloAPI(object):
 		self._state = _state.State()
 		self._condition = threading.Event()
 		self._listening = False
-		self._start_fix = False
+		self._start_fix = True
 		
 		if auto_login:
 			if (
@@ -4203,167 +4203,175 @@ class ZaloAPI(object):
 			"Cookie": raw_cookies
 		}
 		
-		async with connect(url, extra_headers=headers, ping_timeout=None) as ws:
-			self.run_in_thread(self._fix_recv)
-			loop = asyncio.get_event_loop()
-			await self.on_listening()
-			self._listening = True
-			
-			while not self._condition.is_set():
-				try:
-					data = await ws.recv()
-					if not isinstance(data, bytes):
-						continue
-					
-					encodedHeader = data[:4]
-					n, cmd, s = _util.getHeader(encodedHeader)
-					
-					dataToDecode = data[4:]
-					decodedData = dataToDecode.decode("utf-8")
-					if not decodedData:
-						continue
-					
-					parsed = json.loads(decodedData)
-					if n == 1 and cmd == 1 and s == 1 and "key" in parsed:
-						self.ws_key = parsed["key"]
-						continue
-					
-					if not hasattr(self, "ws_key"):
-						logger.error("Unable to decrypt data because key not found")
-						continue
-					
-					parsedData = _util.zws_decode(parsed, self.ws_key)
-					if n == 1 and cmd == 3000 and s == 0:
-						logger.warning("Another connection is opened, closing this one")
-						await ws.close()
-					
-					elif n == 1 and cmd == 501 and s == 0:
-						userMsgs = parsedData["data"]["msgs"]
+		try:
+			async with connect(url, extra_headers=headers, ping_timeout=None) as ws:
+				self.run_in_thread(self._fix_recv)
+				loop = asyncio.get_event_loop()
+				await self.on_listening()
+				self._listening = True
+				
+				while not self._condition.is_set():
+					try:
+						data = await ws.recv()
+						if not isinstance(data, bytes):
+							continue
 						
-						for message in userMsgs:
-							msgObj = MessageObject.fromDict(message, None)
-							context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.uidFrom) or msgObj.idTo), "thread_type": ThreadType.USER}
-							context = ContextObject.fromDict(context)
-							[
-								loop.create_task(self.onMessage(context))
-								if thread else
-								await self.onMessage(context)
-							]
-					
-					elif n == 1 and cmd == 521 and s == 0:
-						groupMsgs = parsedData["data"]["groupMsgs"]
+						encodedHeader = data[:4]
+						n, cmd, s = _util.getHeader(encodedHeader)
 						
-						for message in groupMsgs:
+						dataToDecode = data[4:]
+						decodedData = dataToDecode.decode("utf-8")
+						if not decodedData:
+							continue
+						
+						parsed = json.loads(decodedData)
+						if n == 1 and cmd == 1 and s == 1 and "key" in parsed:
+							self.ws_key = parsed["key"]
+							continue
+						
+						if not hasattr(self, "ws_key"):
+							logger.error("Unable to decrypt data because key not found")
+							continue
+						
+						parsedData = _util.zws_decode(parsed, self.ws_key)
+						if n == 1 and cmd == 3000 and s == 0:
+							logger.warning("Another connection is opened, closing this one")
+							await ws.close()
+						
+						elif n == 1 and cmd == 501 and s == 0:
+							userMsgs = parsedData["data"]["msgs"]
 							
-							try:
-								messages = (await self.get_recent_group(message["idTo"]))["groupMsgs"]
-								message = next((msg for msg in messages if msg["msgId"] == message["msgId"]), message)
-							except:
-								pass
-							
-							msgObj = MessageObject.fromDict(message, None)
-							context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.idTo) or msgObj.idTo), "thread_type": ThreadType.GROUP}
-							context = ContextObject.fromDict(context)
-							[
-								loop.create_task(self.onMessage(context))
-								if thread else
-								await self.onMessage(context)
-							]
-					
-					elif n == 1 and cmd in [502, 522, 504, 524] and s == 0:
-						# Delivereds, Seen, Clear Unread, ...
-						continue
-					
-					elif n == 1 and cmd == 602 and s == 0:
-						# Typing Event
-						continue
-					
-					elif n == 1 and cmd == 601 and s == 0:
-						controls = parsedData["data"].get("controls", [])
-						for control in controls:
-							if control["content"]["act_type"] == "group":
-								
-								if control["content"]["act"] == "join_reject":
-									continue
-								
-								groupEventData = json.loads(control["content"]["data"]) if isinstance(control["content"]["data"], str) else control["content"]["data"]
-								groupEventType = _util.getGroupEventType(control["content"]["act"])
-								context = {"event_data": groupEventData, "event_type": groupEventType}
-								context = EventObject.fromDict(context)
+							for message in userMsgs:
+								msgObj = MessageObject.fromDict(message, None)
+								context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.uidFrom) or msgObj.idTo), "thread_type": ThreadType.USER}
+								context = ContextObject.fromDict(context)
 								[
-									loop.create_task(self.on_event(context))
+									loop.create_task(self.onMessage(context))
 									if thread else
-									await self.on_event(context)
+									await self.onMessage(context)
 								]
 						
-						continue
-					
-					elif cmd == 612:
-						reacts = parsedData["data"].get("reacts", [])
-						reactGroups = parsedData["data"].get("reactGroups", [])
-						
-						for react in reacts:
-							react["content"] = json.loads(react["content"])
-							msgObj = MessageObject.fromDict(react, None)
-							context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.uidFrom) or msgObj.idTo), "thread_type": ThreadType.USER}
-							context = ContextObject.fromDict(context)
-							[
-								loop.create_task(self.onMessage(context))
-								if thread else
-								await self.onMessage(context)
-							]
-						
-						for reactGroup in reactGroups:
-							reactGroup["content"] = json.loads(reactGroup["content"])
-							msgObj = MessageObject.fromDict(reactGroup, None)
-							context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.idTo) or msgObj.idTo), "thread_type": ThreadType.GROUP}
-							context = ContextObject.fromDict(context)
-							[
-								loop.create_task(self.onMessage(context))
-								if thread else
-								await self.onMessage(context)
-							]
-					
-					else:
-						continue
-			
-				except asyncio.CancelledError:
-					self._condition.set()
-					await ws.close()
-					print("\x1b[1K")
-					logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
-					pid = os.getpid()
-					os.kill(pid, signal.SIGTERM)
-				
-				except websockets.ConnectionClosedOK:
-					self._condition.set()
-				
-				except websockets.ConnectionClosedError:
-					await ws.close()
-					self._condition.set()
-				
-				except Exception as e:
-					self._condition.set()
-					await ws.close()
-					self._listening = False
-					await self.on_error_callback(e)
-					if self.run_forever:
-						while not self._listening:
-							try:
-								logger.debug("Run forever mode is enabled, trying to reconnect...")
-								await self._listen_ws(thread, reconnect)
-							except:
-								pass
+						elif n == 1 and cmd == 521 and s == 0:
+							groupMsgs = parsedData["data"]["groupMsgs"]
 							
-							await asyncio.sleep(reconnect)
+							for message in groupMsgs:
+								
+								try:
+									messages = (await self.get_recent_group(message["idTo"]))["groupMsgs"]
+									message = next((msg for msg in messages if msg["msgId"] == message["msgId"]), message)
+								except:
+									pass
+								
+								msgObj = MessageObject.fromDict(message, None)
+								context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.idTo) or msgObj.idTo), "thread_type": ThreadType.GROUP}
+								context = ContextObject.fromDict(context)
+								[
+									loop.create_task(self.onMessage(context))
+									if thread else
+									await self.onMessage(context)
+								]
+						
+						elif n == 1 and cmd in [502, 522, 504, 524] and s == 0:
+							# Delivereds, Seen, Clear Unread, ...
+							continue
+						
+						elif n == 1 and cmd == 602 and s == 0:
+							# Typing Event
+							continue
+						
+						elif n == 1 and cmd == 601 and s == 0:
+							controls = parsedData["data"].get("controls", [])
+							for control in controls:
+								if control["content"]["act_type"] == "group":
+									
+									if control["content"]["act"] == "join_reject":
+										continue
+									
+									groupEventData = json.loads(control["content"]["data"]) if isinstance(control["content"]["data"], str) else control["content"]["data"]
+									groupEventType = _util.getGroupEventType(control["content"]["act"])
+									context = {"event_data": groupEventData, "event_type": groupEventType}
+									context = EventObject.fromDict(context)
+									[
+										loop.create_task(self.on_event(context))
+										if thread else
+										await self.on_event(context)
+									]
+							
+							continue
+						
+						elif cmd == 612:
+							reacts = parsedData["data"].get("reacts", [])
+							reactGroups = parsedData["data"].get("reactGroups", [])
+							
+							for react in reacts:
+								react["content"] = json.loads(react["content"])
+								msgObj = MessageObject.fromDict(react, None)
+								context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.uidFrom) or msgObj.idTo), "thread_type": ThreadType.USER}
+								context = ContextObject.fromDict(context)
+								[
+									loop.create_task(self.onMessage(context))
+									if thread else
+									await self.onMessage(context)
+								]
+							
+							for reactGroup in reactGroups:
+								reactGroup["content"] = json.loads(reactGroup["content"])
+								msgObj = MessageObject.fromDict(reactGroup, None)
+								context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.idTo) or msgObj.idTo), "thread_type": ThreadType.GROUP}
+								context = ContextObject.fromDict(context)
+								[
+									loop.create_task(self.onMessage(context))
+									if thread else
+									await self.onMessage(context)
+								]
+						
+						else:
+							continue
 				
-				finally:
-					self._listening = False
+					except asyncio.CancelledError:
+						self._condition.set()
+						await ws.close()
+						print("\x1b[1K")
+						logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
+						pid = os.getpid()
+						os.kill(pid, signal.SIGTERM)
+					
+					except (websockets.ConnectionClosedOK, websockets.exceptions.ConnectionClosedOK):
+						self._condition.set()
+					
+					except (websockets.ConnectionClosedError, websockets.exceptions.ConnectionClosedError):
+						self._start_fix = True
+						self._condition.set()
+						await ws.close()
+					
+					except Exception as e:
+						self._listening = False
+						self._start_fix = False
+						self._condition.set()
+						await ws.close()
+						await self.on_error_callback(e)
+						if self.run_forever:
+							while not self._listening:
+								try:
+									logger.debug("Run forever mode is enabled, trying to reconnect...")
+									await self._listen_ws(thread, reconnect)
+								except:
+									pass
+								
+								await asyncio.sleep(reconnect)
+					
+					finally:
+						self._listening = False
+			
+			if self._start_fix:
+				logger.debug("Reconnecting websocket because of interruption...")
+				self._start_fix = False
+				await self._listen_ws(thread, reconnect)
 		
-		if self._start_fix and self._condition.is_set():
-			self._start_fix = False
+		except Exception as e:
+			await self.on_error_callback(e)
 			await self._listen_ws(thread, reconnect)
-
+	
 	def startListening(self, delay=1, thread=False, type="websocket", reconnect=5):
 		"""Start listening from an external event loop.
 		
@@ -4501,6 +4509,7 @@ class ZaloAPI(object):
 			ts: A timestamp of the error (Default: auto)
 		"""
 		logger.error(f"An error occurred at {ts}: {error}")
+		print(traceback.format_exc())
 	
 	@add_register_handler
 	async def onMessage(self, ctx):
