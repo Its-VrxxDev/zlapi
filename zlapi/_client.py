@@ -4266,17 +4266,19 @@ class ZaloAPI(object):
 					pid = os.getpid()
 					os.kill(pid, signal.SIGTERM)
 				
-				except websockets.ConnectionClosedOK:
+				except (websockets.ConnectionClosedOK, websockets.exceptions.ConnectionClosedOK):
 					self._condition.set()
 				
-				except websockets.ConnectionClosedError:
-					ws.close()
+				except (websockets.ConnectionClosedError, websockets.exceptions.ConnectionClosedError):
+					self._start_fix = True
 					self._condition.set()
+					ws.close()
 				
 				except Exception as e:
+					self._listening = False
+					self._start_fix = False
 					self._condition.set()
 					ws.close()
-					self._listening = False
 					self.onErrorCallBack(e)
 					if self.run_forever:
 						while not self._listening:
@@ -4291,7 +4293,8 @@ class ZaloAPI(object):
 				finally:
 					self._listening = False
 		
-		if self._start_fix and self._condition.is_set():
+		if self._start_fix:
+			logger.debug("Reconnecting websocket because of interruption...")
 			self._start_fix = False
 			self._listen_ws(thread, reconnect)
 	
@@ -4446,6 +4449,7 @@ class ZaloAPI(object):
 			ts: A timestamp of the error (Default: auto)
 		"""
 		logger.error(f"An error occurred at {ts}: {error}")
+		print(traceback.format_exc())
 	
 	"""
 	END EVENTS
