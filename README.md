@@ -3862,8 +3862,7 @@ This function will Send link to a User/Group with url.
 This function will Send report to Zalo.
 
 > - Args:
->	- thread_id (int | str): User/Group ID to report
->	- thread_type (ThreadType): ``ThreadType.USER``, ``ThreadType.GROUP``
+>	- user_id (int | str): User ID to report
 >	- reason (int): Reason for reporting
 >			
 >		- 1 = Nội dung nhạy cảm
@@ -3879,7 +3878,7 @@ This function will Send report to Zalo.
 - Outside Module Function
 
   ```py
-  bot.sendReport(<thread_id>, <thread_type>)
+  bot.sendReport(<user_id>)
   ```
 
 </br>
@@ -3887,7 +3886,7 @@ This function will Send report to Zalo.
 - Inside Module Function
 
   ```py
-  self.sendReport(<thread_id>, <thread_type>)
+  self.sendReport(<user_id>)
   ```
 
 </details>
@@ -3898,7 +3897,7 @@ This function will Send report to Zalo.
 - Outside Module Function
 
   ```py
-  asyncio.run(bot.sendReport(<thread_id>, <thread_type>))
+  asyncio.run(bot.sendReport(<user_id>))
   ```
 
 </br>
@@ -3906,7 +3905,7 @@ This function will Send report to Zalo.
 - Inside Module Function (You can use ``await`` instead.)
 
   ```py
-  await self.sendReport(<thread_id>, <thread_type>)
+  await self.sendReport(<user_id>)
   ```
 
 </details>
@@ -3917,7 +3916,7 @@ This function will Send report to Zalo.
 - Outside Module Function
   
   ```py
-  asyncio.run(bot.send_report(<thread_id>, <thread_type>))
+  asyncio.run(bot.send_report(<user_id>))
   ```
 
 </br>
@@ -3925,7 +3924,7 @@ This function will Send report to Zalo.
 - Inside Module Function (You can use ``await`` instead.)
 
   ```py
-  await bot.send_report(<thread_id>, <thread_type>)
+  await bot.send_report(<user_id>)
   ```
 
 </details>
