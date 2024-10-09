@@ -4443,20 +4443,24 @@ class ZaloAPI(object):
 						await ws.close()
 					
 					except Exception as e:
-						self._listening = False
-						self._start_fix = False
-						self._condition.set()
-						await ws.close()
-						await self.on_error_callback(e)
-						if self.run_forever:
-							while not self._listening:
-								try:
-									logger.debug("Run forever mode is enabled, trying to reconnect...")
-									await self._listen_ws(thread, reconnect)
-								except:
-									pass
-								
-								await asyncio.sleep(reconnect)
+						if str(e) == "sent 1000 (OK); then received 1000 (OK) NORMAL_CLOSURE":
+							pass
+						
+						else:
+							self._listening = False
+							self._start_fix = False
+							self._condition.set()
+							await ws.close()
+							await self.on_error_callback(e)
+							if self.run_forever:
+								while not self._listening:
+									try:
+										logger.debug("Run forever mode is enabled, trying to reconnect...")
+										await self._listen_ws(thread, reconnect)
+									except:
+										pass
+									
+									await asyncio.sleep(reconnect)
 					
 					finally:
 						self._listening = False
@@ -4467,8 +4471,12 @@ class ZaloAPI(object):
 				await self._listen_ws(thread, reconnect)
 		
 		except Exception as e:
-			await self.on_error_callback(e)
-			await self._listen_ws(thread, reconnect)
+			if str(e) == "sent 1000 (OK); then received 1000 (OK) NORMAL_CLOSURE":
+				pass
+			
+			else:
+				await self.on_error_callback(e)
+				await self._listen_ws(thread, reconnect)
 	
 	def startListening(self, delay=1, thread=False, type="websocket", reconnect=5):
 		"""Start listening from an external event loop.
