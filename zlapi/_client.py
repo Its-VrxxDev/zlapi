@@ -4269,20 +4269,24 @@ class ZaloAPI(object):
 					ws.close()
 				
 				except Exception as e:
-					self._listening = False
-					self._start_fix = False
-					self._condition.set()
-					ws.close()
-					self.onErrorCallBack(e)
-					if self.run_forever:
-						while not self._listening:
-							try:
-								logger.debug("Run forever mode is enabled, trying to reconnect...")
-								self._listen_ws(thread, reconnect)
-							except:
-								pass
-							
-							time.sleep(reconnect)
+					if str(e) == "sent 1000 (OK); then received 1000 (OK) NORMAL_CLOSURE":
+						pass
+					
+					else:
+						self._listening = False
+						self._start_fix = False
+						self._condition.set()
+						ws.close()
+						self.onErrorCallBack(e)
+						if self.run_forever:
+							while not self._listening:
+								try:
+									logger.debug("Run forever mode is enabled, trying to reconnect...")
+									self._listen_ws(thread, reconnect)
+								except:
+									pass
+								
+								time.sleep(reconnect)
 				
 				finally:
 					self._listening = False
