@@ -82,7 +82,7 @@ class ZaloAPI(object):
 		return wrapper
 	
 	
-	def register_handler(self, func=None, message=None, commands=None):
+	def register_handler(self, func=None, msg=None, message=None, commands=None):
 		def decorator(func):
 			if commands is not None:
 				self.check_commands_input(commands, "register_handler")
@@ -92,8 +92,8 @@ class ZaloAPI(object):
 				else:
 					self.register_commands.update({self.prefix + command: func for command in commands})
 			
-			if message:
-				self.register_messages.append((func, message))
+			if message or msg:
+				self.register_messages.append((func, message or msg))
 			
 			return func
 		
@@ -325,7 +325,7 @@ class ZaloAPI(object):
 				"jxl": 0,
 				"chunkId": 1
 			},
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 		}
 		
@@ -385,7 +385,7 @@ class ZaloAPI(object):
 				"avatar_size": 120,
 				"imei": self._imei
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"os": 8,
 			"browser": 0
@@ -431,7 +431,7 @@ class ZaloAPI(object):
 		phone = "84" + str(phoneNumber) if str(phoneNumber)[:1] != "0" else "84" + str(phoneNumber)[1:]
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"params": self._encode({
 				"phone": phone,
@@ -476,7 +476,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -536,7 +536,7 @@ class ZaloAPI(object):
 		"""
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -594,7 +594,7 @@ class ZaloAPI(object):
 				"avatar_size": 120,
 				"actiontime": 0
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -626,7 +626,7 @@ class ZaloAPI(object):
 		"""
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -669,7 +669,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": "641",
+			"zpw_ver": "645",
 			"zpw_type": "30",
 			"params": self._encode({
 				"threadIdLocalMsgId": json.dumps({}),
@@ -719,7 +719,7 @@ class ZaloAPI(object):
 				"imei": self._imei,
 				"src": 1
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0,
 		}
@@ -755,7 +755,7 @@ class ZaloAPI(object):
 				"last_type": last_type,
 				"imei": self._imei
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -891,7 +891,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -952,7 +952,7 @@ class ZaloAPI(object):
 		files = [("fileContent", open(filePath, "rb"))]
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"params": self._encode({
 				"avatarSize": 120,
@@ -1016,7 +1016,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1068,7 +1068,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1114,7 +1114,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1160,7 +1160,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1205,7 +1205,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1287,7 +1287,7 @@ class ZaloAPI(object):
 				"imei": self._imei,
 				"zsource": 601
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1344,7 +1344,7 @@ class ZaloAPI(object):
 				"originHeight": 640,
 				"imei": self._imei
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1387,7 +1387,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1515,7 +1515,7 @@ class ZaloAPI(object):
 				"grid": str(groupId),
 				"imei":self._imei
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1563,7 +1563,7 @@ class ZaloAPI(object):
 				"imei": self._imei,
 				"language": "vi"
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1613,7 +1613,7 @@ class ZaloAPI(object):
 				memberTypes.append(-1)
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1669,7 +1669,7 @@ class ZaloAPI(object):
 			members = [str(members)]
 			
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1722,7 +1722,7 @@ class ZaloAPI(object):
 			members = [str(members)]
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"params": self._encode({
 				"grid": str(groupId),
@@ -1772,7 +1772,7 @@ class ZaloAPI(object):
 			members = [str(members)]
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"params": self._encode({
 				"grid": str(groupId),
@@ -1828,7 +1828,7 @@ class ZaloAPI(object):
 				"members": members,
 				"imei": self._imei
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1880,7 +1880,7 @@ class ZaloAPI(object):
 				"members": members,
 				"imei": self._imei
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -1919,7 +1919,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -2098,7 +2098,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"params": self._encode({
 				"grid": str(groupId),
@@ -2148,7 +2148,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -2204,7 +2204,7 @@ class ZaloAPI(object):
 				"grid": str(groupId),
 				"imei": self._imei
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -2256,7 +2256,7 @@ class ZaloAPI(object):
 				"members": members,
 				"isApprove": 1 if isApprove else 0
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -2298,7 +2298,7 @@ class ZaloAPI(object):
 				"poll_id": int(pollId),
 				"imei":self._imei
 			}),
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -2357,7 +2357,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -2421,7 +2421,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -2468,7 +2468,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -2545,7 +2545,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -2619,7 +2619,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -2702,7 +2702,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -2760,7 +2760,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -2827,7 +2827,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -2902,7 +2902,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -3006,7 +3006,7 @@ class ZaloAPI(object):
 		extension = has_extension[-1:][0] if len(has_extension) >= 2 else extension
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3101,7 +3101,7 @@ class ZaloAPI(object):
 			raise ZaloAPIException(f"Unable to get url content: {e}")
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3198,7 +3198,7 @@ class ZaloAPI(object):
 					fileSize = fileSize if fileSize else 0
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3252,6 +3252,112 @@ class ZaloAPI(object):
 		error_message = data.get("error_message") or data.get("data")
 		raise ZaloAPIException(f"Error #{error_code} when sending requests: {error_message}")
 	
+	async def send_remote_image(self, imageUrl, thread_id, thread_type, width=2560, height=2560, message=None, ttl=0, custom_payload=None):
+		"""Send Image to a User/Group with url.
+			
+		Args:
+			imageUrl (str): Image url to send
+			thread_id (int | str): User/Group ID to send to.
+			thread_type (ThreadType): ThreadType.USER, ThreadType.GROUP
+			width (int): Image width to send
+			height (int): Image height to send
+			message (Message): Message to send with image
+			
+		Returns:
+			object: `User/Group` objects response
+			dict: A dictionary containing error responses
+		
+		Raises:
+			ZaloAPIException: If request failed
+		"""
+		params = {
+			"zpw_ver": 645,
+			"zpw_type": 30,
+			"nretry": 0
+		}
+		
+		if custom_payload:
+			if thread_type == ThreadType.USER:
+				url = "https://tt-files-wpa.chat.zalo.me/api/message/photo_original/send"
+			elif thread_type == ThreadType.GROUP:
+				url = "https://tt-files-wpa.chat.zalo.me/api/group/photo_original/send"
+			else:
+				raise ZaloUserError("Thread type is invalid")
+			
+			payload = custom_payload
+		
+		else:
+			try:
+				async with aiohttp.ClientSession() as session:
+					async with session.head(imageUrl) as response:
+						if response.status == 200:
+							fileSize = int(response.headers.get("Content-Length", len(await response.read())))
+						else:
+							fileSize = 344622
+			
+			except Exception as e:
+				raise ZaloAPIException(f"Unable to get url content: {e}")
+			
+			payload = {
+				"params": {
+					"photoId": int(_util.now() * 2),
+					"clientId": int(_util.now() - 1000),
+					"desc": message.text if message else "" or "",
+					"width": width,
+					"height": height,
+					"rawUrl": str(imageUrl),
+					"thumbUrl": str(imageUrl),
+					"hdUrl": str(imageUrl),
+					"thumbSize": str(fileSize),
+					"fileSize": str(fileSize),
+					"hdSize": str(fileSize),
+					"zsource": -1,
+					"jcp": json.dumps({"sendSource": 1, "convertible": "jxl"}),
+					"ttl": ttl,
+					"imei": self._imei
+				}
+			}
+			
+			if message and message.mention:
+				payload["params"]["mentionInfo"] = message.mention
+			
+			if thread_type == ThreadType.USER:
+				url = "https://tt-files-wpa.chat.zalo.me/api/message/photo_original/send"
+				payload["params"]["toid"] = str(thread_id)
+				payload["params"]["normalUrl"] = imageUrl
+			elif thread_type == ThreadType.GROUP:
+				url = "https://tt-files-wpa.chat.zalo.me/api/group/photo_original/send"
+				payload["params"]["grid"] = str(thread_id)
+				payload["params"]["oriUrl"] = imageUrl
+			else:
+				raise ZaloUserError("Thread type is invalid")
+		
+		payload["params"] = self._encode(payload["params"])
+		
+		data = await self._post(url, params=params, data=payload)
+		results = data.get("data") if data.get("error_code") == 0 else None
+		if results:
+			results = self._decode(results)
+			results = results.get("data") if results.get("data") else results
+			if results == None:
+				results = {"error_code": 1337, "error_message": "Data is None"}
+			
+			if isinstance(results, str):
+				try:
+					results = json.loads(results)
+				except:
+					results = {"error_code": 1337, "error_message": results}
+			
+			return (
+				Group.fromDict(results, None) 
+				if thread_type == ThreadType.GROUP else 
+				User.fromDict(results, None)
+			)
+			
+		error_code = data.get("error_code")
+		error_message = data.get("error_message") or data.get("data")
+		raise ZaloAPIException(f"Error #{error_code} when sending requests: {error_message}")
+	
 	async def send_local_image(self, imagePath, thread_id, thread_type, width=2560, height=2560, message=None, ttl=0, custom_payload=None):
 		"""Send Image to a User/Group with local file.
 			
@@ -3271,7 +3377,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3451,7 +3557,7 @@ class ZaloAPI(object):
 		fileChecksum = hashlib.md5(open(gifPath, "rb").read()).hexdigest()
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"type": 1,
 			"params": {
@@ -3523,7 +3629,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3609,7 +3715,7 @@ class ZaloAPI(object):
 		width = int(width) if width else 498
 		height = int(height) if height else 332
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3706,7 +3812,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -3771,7 +3877,7 @@ class ZaloAPI(object):
 		error_message = data.get("error_message") or data.get("data")
 		raise ZaloAPIException(f"Error #{error_code} when sending requests: {error_message}")
 	
-	async def send_report(self, thread_id, thread_type, reason=0, content=None):
+	async def send_report(self, user_id, reason=0, content=None):
 		"""Send report to Zalo.
 		
 		Args:
@@ -3781,40 +3887,34 @@ class ZaloAPI(object):
 				3 = Lừa đảo
 				0 = custom
 			content (str): Report content (work if reason = custom)
-			thread_id (int | str): User/Group ID to report
-			thread_type (ThreadType): ThreadType.USER, ThreadType.GROUP
+			user_id (int | str): User ID to report
 		
 		Returns:
-			object: `User/Group` send report response
+			object: `User` send report response
 		
 		Raises:
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
 		payload = {
 			"params": {
-				"uidTo": str(thread_id),
-				"imei": self._imei
+				"idTo": str(user_id),
+				"objId": "person.profile"
 			}
 		}
 		
-		payload["params"]["content"] = content if content and not reason else "" if not content and not reason else ""
-		payload["params"]["reason"] = random.randint(1, 3) if not content else reason
+		content = content if content and not reason else "" if not content and not reason else ""
+		if content:
+			payload["params"]["content"] = content
 		
-		if thread_type == ThreadType.USER:
-			payload["params"]["type"] = 2
-		elif thread_type == ThreadType.GROUP:
-			payload["params"]["type"] = 14
-		else:
-			raise ZaloUserError("Thread type is invalid")
-		
+		payload["params"]["reason"] = str( random.randint(1, 3) if not content else reason )
 		payload["params"] = self._encode(payload["params"])
 		
-		data = await self._post("https://tt-profile-wpa.chat.zalo.me/api/social/profile/reportabuse", params=params, data=payload)
+		data = await self._post("https://tt-profile-wpa.chat.zalo.me/api/report/abuse-v2", params=params, data=payload)
 		results = data.get("data") if data.get("error_code") == 0 else None
 		if results:
 			results = self._decode(results)
@@ -3828,11 +3928,7 @@ class ZaloAPI(object):
 				except:
 					results = {"error_code": 1337, "error_message": results}
 			
-			return (
-				Group.fromDict(results, None) 
-				if thread_type == ThreadType.GROUP else 
-				User.fromDict(results, None)
-			)
+			return User.fromDict(results, None)
 			
 		error_code = data.get("error_code")
 		error_message = data.get("error_message") or data.get("data")
@@ -3855,7 +3951,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3926,7 +4022,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -3984,7 +4080,7 @@ class ZaloAPI(object):
 		destination_id = "0" if thread_type == ThreadType.USER else thread_id
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30
 		}
 		
@@ -4055,7 +4151,7 @@ class ZaloAPI(object):
 		destination_id = "0" if thread_type == ThreadType.USER else thread_id
 		
 		params = {
-			"zpw_ver": 641,
+			"zpw_ver": 645,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -4179,7 +4275,7 @@ class ZaloAPI(object):
 	
 	async def _listen_ws(self, thread=False, reconnect=5):
 		self._condition.clear()
-		params = {"zpw_ver": 641, "zpw_type": 30, "t": _util.now()}
+		params = {"zpw_ver": 645, "zpw_type": 30, "t": _util.now()}
 		url = self._state._config["zpw_ws"][0] + "?" + urllib.parse.urlencode(params)
 		
 		user_agent = self._state._headers.get("User-Agent") or _util.HEADERS["User-Agent"]
@@ -4338,6 +4434,8 @@ class ZaloAPI(object):
 					
 					except (websockets.ConnectionClosedOK, websockets.exceptions.ConnectionClosedOK):
 						self._condition.set()
+						await ws.close()
+						break
 					
 					except (websockets.ConnectionClosedError, websockets.exceptions.ConnectionClosedError):
 						self._start_fix = True
