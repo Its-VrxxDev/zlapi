@@ -3536,8 +3536,8 @@ class ZaloAPI(object):
 		Raises:
 			ZaloAPIException: If request failed
 		"""
-		width = int(width) if width else 498
-		height = int(height) if height else 332
+		width = int(width) if width else 0
+		height = int(height) if height else 0
 		params = {
 			"zpw_ver": 645,
 			"zpw_type": 30,
