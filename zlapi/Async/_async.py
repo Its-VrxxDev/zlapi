@@ -229,7 +229,7 @@ class ZaloAPI(object):
 				"jxl": 0,
 				"chunkId": 1
 			},
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 		}
 		
@@ -289,7 +289,7 @@ class ZaloAPI(object):
 				"avatar_size": 120,
 				"imei": self._imei
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"os": 8,
 			"browser": 0
@@ -335,7 +335,7 @@ class ZaloAPI(object):
 		phone = "84" + str(phoneNumber) if str(phoneNumber)[:1] != "0" else "84" + str(phoneNumber)[1:]
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"params": self._encode({
 				"phone": phone,
@@ -380,7 +380,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -440,7 +440,7 @@ class ZaloAPI(object):
 		"""
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -498,7 +498,7 @@ class ZaloAPI(object):
 				"avatar_size": 120,
 				"actiontime": 0
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -530,7 +530,7 @@ class ZaloAPI(object):
 		"""
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -573,7 +573,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": "645",
+			"zpw_ver": "647",
 			"zpw_type": "30",
 			"params": self._encode({
 				"threadIdLocalMsgId": json.dumps({}),
@@ -623,7 +623,7 @@ class ZaloAPI(object):
 				"imei": self._imei,
 				"src": 1
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0,
 		}
@@ -659,7 +659,7 @@ class ZaloAPI(object):
 				"last_type": last_type,
 				"imei": self._imei
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -795,7 +795,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -856,7 +856,7 @@ class ZaloAPI(object):
 		files = [("fileContent", open(filePath, "rb"))]
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"params": self._encode({
 				"avatarSize": 120,
@@ -920,7 +920,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -972,7 +972,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1018,7 +1018,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1064,7 +1064,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1109,7 +1109,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1191,7 +1191,7 @@ class ZaloAPI(object):
 				"imei": self._imei,
 				"zsource": 601
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1248,7 +1248,7 @@ class ZaloAPI(object):
 				"originHeight": 640,
 				"imei": self._imei
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1291,7 +1291,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1419,7 +1419,7 @@ class ZaloAPI(object):
 				"grid": str(groupId),
 				"imei":self._imei
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1467,7 +1467,7 @@ class ZaloAPI(object):
 				"imei": self._imei,
 				"language": "vi"
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1517,7 +1517,7 @@ class ZaloAPI(object):
 				memberTypes.append(-1)
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1573,7 +1573,7 @@ class ZaloAPI(object):
 			members = [str(members)]
 			
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1626,7 +1626,7 @@ class ZaloAPI(object):
 			members = [str(members)]
 			
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"params": self._encode({
 				"grid": str(groupId),
@@ -1676,7 +1676,7 @@ class ZaloAPI(object):
 			members = [str(members)]
 			
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"params": self._encode({
 				"grid": str(groupId),
@@ -1732,7 +1732,7 @@ class ZaloAPI(object):
 				"members": members,
 				"imei": self._imei
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1784,7 +1784,7 @@ class ZaloAPI(object):
 				"members": members,
 				"imei": self._imei
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -1823,7 +1823,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2002,7 +2002,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"params": self._encode({
 				"grid": str(groupId),
@@ -2052,7 +2052,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2108,7 +2108,7 @@ class ZaloAPI(object):
 				"grid": str(groupId),
 				"imei": self._imei
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2160,7 +2160,7 @@ class ZaloAPI(object):
 				"members": members,
 				"isApprove": 1 if isApprove else 0
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2202,7 +2202,7 @@ class ZaloAPI(object):
 				"poll_id": int(pollId),
 				"imei":self._imei
 			}),
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2261,7 +2261,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2325,7 +2325,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2372,7 +2372,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2449,7 +2449,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -2523,7 +2523,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -2602,7 +2602,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -2660,7 +2660,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -2727,7 +2727,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2802,7 +2802,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -2905,7 +2905,7 @@ class ZaloAPI(object):
 		extension = has_extension[-1:][0] if len(has_extension) >= 2 else extension
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -2999,7 +2999,7 @@ class ZaloAPI(object):
 			raise ZaloAPIException(f"Unable to get url content: {e}")
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3096,7 +3096,7 @@ class ZaloAPI(object):
 					fileSize = fileSize if fileSize else 0
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3169,7 +3169,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3275,7 +3275,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3455,7 +3455,7 @@ class ZaloAPI(object):
 		fileChecksum = hashlib.md5(open(gifPath, "rb").read()).hexdigest()
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"type": 1,
 			"params": {
@@ -3527,7 +3527,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3612,7 +3612,7 @@ class ZaloAPI(object):
 		width = int(width) if width else 0
 		height = int(height) if height else 0
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3709,7 +3709,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -3793,7 +3793,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -3848,7 +3848,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -3919,7 +3919,7 @@ class ZaloAPI(object):
 			ZaloAPIException: If request failed
 		"""
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -3979,7 +3979,7 @@ class ZaloAPI(object):
 		destination_id = "0" if thread_type == ThreadType.USER else thread_id
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30
 		}
 		
@@ -4050,7 +4050,7 @@ class ZaloAPI(object):
 		destination_id = "0" if thread_type == ThreadType.USER else thread_id
 		
 		params = {
-			"zpw_ver": 645,
+			"zpw_ver": 647,
 			"zpw_type": 30,
 			"nretry": 0
 		}
@@ -4106,65 +4106,47 @@ class ZaloAPI(object):
 		self._condition.clear()
 		HasRead = set()
 		
-		try:
-			await self.onListening()
-			self._listening = True
-			
-			while not self._condition.is_set():
-				ListenTime = int((time.time() - 10) * 1000)
+		while not self._condition.is_set():
+			try:
+				await self.onListening()
+				self._listening = True
 				
-				if len(HasRead) > 10000000:
-					HasRead.clear()
-				
-				messages = await self.getLastMsgs()
-				groupmsg = messages.groupMsgs
-				messages = messages.msgs
-				
-				loop = asyncio.get_event_loop()
-				for message in messages + groupmsg:
-					if int(message["ts"]) >= ListenTime and message["msgId"] not in HasRead:
-						HasRead.add(message["msgId"])
-						msgObj = MessageObject.fromDict(message, self._undefined)
-						if message in messages:
-							loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER))
-						else:
-							loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP))
-				
-				await asyncio.sleep(delay)
-		
-		except asyncio.CancelledError:
-			self._condition.set()
-			print("\x1b[1K")
-			logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
-			pid = os.getpid()
-			os.kill(pid, signal.SIGTERM)
-		
-		except Exception as e:
-			self._condition.set()
-			self._listening = False
-			await self.onErrorCallBack(e)
-			if self.run_forever:
-				while not self._listening:
-					try:
-						logger.debug("Run forever mode is enabled, trying to reconnect...")
-						await self._listen_req(delay, reconnect)
-					except:
-						pass
+				while not self._condition.is_set():
+					ListenTime = int((time.time() - 10) * 1000)
 					
-					await asyncio.sleep(reconnect)
+					if len(HasRead) > 10000000:
+						HasRead.clear()
+					
+					messages = await self.getLastMsgs()
+					groupmsg = messages.groupMsgs
+					messages = messages.msgs
+					
+					loop = asyncio.get_event_loop()
+					for message in messages + groupmsg:
+						if int(message["ts"]) >= ListenTime and message["msgId"] not in HasRead:
+							HasRead.add(message["msgId"])
+							msgObj = MessageObject.fromDict(message, self._undefined)
+							if message in messages:
+								loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER))
+							else:
+								loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP))
+					
+					await asyncio.sleep(delay)
+			
+			except asyncio.CancelledError:
+				self._condition.set()
+				logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
+				break
+			
+			except Exception as e:
+				await self.onErrorCallBack(e)
+				
+			await asyncio.sleep(reconnect)
 		
-		finally:
-			self._listening = False
-	
-	async def _fix_recv(self):
-		old_timestamp = int(time.time())
-		await asyncio.sleep(50 * 60)
-		self._start_fix = True
-		self._condition.set()
 	
 	async def _listen_ws(self, thread=False, reconnect=5):
 		self._condition.clear()
-		params = {"zpw_ver": 645, "zpw_type": 30, "t": _util.now()}
+		params = {"zpw_ver": 647, "zpw_type": 30, "t": _util.now()}
 		url = self._state._config["zpw_ws"][0] + "?" + urllib.parse.urlencode(params)
 		
 		user_agent = self._state._headers.get("User-Agent") or _util.HEADERS["User-Agent"]
@@ -4188,176 +4170,144 @@ class ZaloAPI(object):
 			"Cookie": raw_cookies
 		}
 		
-		try:
-			async with connect(url, extra_headers=headers, ping_timeout=None) as ws:
-				self.run_in_thread(self._fix_recv)
-				loop = asyncio.get_event_loop()
-				await self.onListening()
-				self._listening = True
+		while not self._condition.is_set():
+			try:
 				
-				while not self._condition.is_set():
-					try:
-						data = await ws.recv()
-						if not isinstance(data, bytes):
-							continue
-						
-						encodedHeader = data[:4]
-						n, cmd, s = _util.getHeader(encodedHeader)
-						
-						dataToDecode = data[4:]
-						decodedData = dataToDecode.decode("utf-8")
-						if not decodedData:
-							continue
-						
-						parsed = json.loads(decodedData)
-						if n == 1 and cmd == 1 and s == 1 and "key" in parsed:
-							self.ws_key = parsed["key"]
-							continue
-						
-						if not hasattr(self, "ws_key"):
-							logger.error("Unable to decrypt data because key not found")
-							continue
-						
-						parsedData = _util.zws_decode(parsed, self.ws_key)
-						if n == 1 and cmd == 3000 and s == 0:
-							logger.warning("Another connection is opened, closing this one")
-							await ws.close()
-						
-						elif n == 1 and cmd == 501 and s == 0:
-							userMsgs = parsedData["data"]["msgs"]
+				async with websockets.connect(url, extra_headers=headers, ping_interval=30) as ws:
+					loop = asyncio.get_event_loop()
+					await self.onListening()
+					self._listening = True
+					while not self._condition.is_set():
+						try:
+							data = await asyncio.wait_for(ws.recv(), timeout=60)
+							if not isinstance(data, bytes):
+								continue
 							
-							for message in userMsgs:
-								msgObj = MessageObject.fromDict(message, None)
-								[
-									loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER))
-									if thread else
-									await self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER)
-								]
-						
-						elif n == 1 and cmd == 521 and s == 0:
-							groupMsgs = parsedData["data"]["groupMsgs"]
+							encodedHeader = data[:4]
+							n, cmd, s = _util.getHeader(encodedHeader)
 							
-							for message in groupMsgs:
+							dataToDecode = data[4:]
+							decodedData = dataToDecode.decode("utf-8")
+							if not decodedData:
+								continue
 							
-								try:
-									messages = (await self.getRecentGroup(message["idTo"]))["groupMsgs"]
-									message = next((msg for msg in messages if msg["msgId"] == message["msgId"]), message)
-								except:
-									pass
+							parsed = json.loads(decodedData)
+							if n == 1 and cmd == 1 and s == 1 and "key" in parsed:
+								self.ws_key = parsed["key"]
+								continue
+							
+							if not hasattr(self, "ws_key"):
+								logger.error("Unable to decrypt data because key not found")
+								continue
+							
+							parsedData = _util.zws_decode(parsed, self.ws_key)
+							if n == 1 and cmd == 3000 and s == 0:
+								logger.warning("Another connection is opened, closing this one")
+								await ws.close()
+							
+							elif n == 1 and cmd == 501 and s == 0:
+								userMsgs = parsedData["data"]["msgs"]
 								
-								msgObj = MessageObject.fromDict(message, None)
-								[
-									loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP))
-									if thread else
-									await self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP)
-								]
-						
-						elif n == 1 and cmd in [502, 522, 504, 524] and s == 0:
-							# Delivereds, Seen, Clear Unread, ...
-							continue
-						
-						elif n == 1 and cmd == 602 and s == 0:
-							# Typing Event
-							continue
-						
-						elif n == 1 and cmd == 601 and s == 0:
-							controls = parsedData["data"].get("controls", [])
-							for control in controls:
-								if control["content"]["act_type"] == "group":
-									
-									if control["content"]["act"] == "join_reject":
-										continue
-									
-									groupEventData = json.loads(control["content"]["data"]) if isinstance(control["content"]["data"], str) else control["content"]["data"]
-									groupEventType = _util.getGroupEventType(control["content"]["act"])
-									event_data = EventObject.fromDict(groupEventData)
-									event_type = groupEventType
+								for message in userMsgs:
+									msgObj = MessageObject.fromDict(message, None)
 									[
-										loop.create_task(self.onEvent(event_data, event_type))
+										loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER))
 										if thread else
-										await self.onEvent(event_data, event_type)
+										await self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER)
 									]
 							
-							continue
-						
-						elif cmd == 612:
-							reacts = parsedData["data"].get("reacts", [])
-							reactGroups = parsedData["data"].get("reactGroups", [])
-							
-							for react in reacts:
-								react["content"] = json.loads(react["content"])
-								msgObj = MessageObject.fromDict(react, None)
-								[
-									loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER))
-									if thread else
-									await self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER)
-								]
-							
-							for reactGroup in reactGroups:
-								reactGroup["content"] = json.loads(reactGroup["content"])
-								msgObj = MessageObject.fromDict(reactGroup, None)
-								[
-									loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP))
-									if thread else
-									await self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP)
-								]
-						
-						else:
-							continue
-					
-					except asyncio.CancelledError:
-						self._condition.set()
-						await ws.close()
-						print("\x1b[1K")
-						logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
-						pid = os.getpid()
-						os.kill(pid, signal.SIGTERM)
-					
-					except (websockets.ConnectionClosedOK, websockets.exceptions.ConnectionClosedOK):
-						self._condition.set()
-						await ws.close()
-						break
-					
-					except (websockets.ConnectionClosedError, websockets.exceptions.ConnectionClosedError):
-						self._start_fix = True
-						self._condition.set()
-						await ws.close()
-					
-					except Exception as e:
-						if str(e) == "sent 1000 (OK); then received 1000 (OK) NORMAL_CLOSURE":
-							pass
-						
-						else:
-							self._listening = False
-							self._start_fix = False
-							self._condition.set()
-							await ws.close()
-							await self.onErrorCallBack(e)
-							if self.run_forever:
-								while not self._listening:
+							elif n == 1 and cmd == 521 and s == 0:
+								groupMsgs = parsedData["data"]["groupMsgs"]
+								
+								for message in groupMsgs:
+								
 									try:
-										logger.debug("Run forever mode is enabled, trying to reconnect...")
-										await self._listen_ws(thread, reconnect)
+										messages = (await self.getRecentGroup(message["idTo"]))["groupMsgs"]
+										message = next((msg for msg in messages if msg["msgId"] == message["msgId"]), message)
 									except:
 										pass
 									
-									await asyncio.sleep(reconnect)
-					
-					finally:
-						self._listening = False
+									msgObj = MessageObject.fromDict(message, None)
+									[
+										loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP))
+										if thread else
+										await self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP)
+									]
+							
+							elif n == 1 and cmd in [502, 522, 504, 524] and s == 0:
+								# Delivereds, Seen, Clear Unread, ...
+								continue
+							
+							elif n == 1 and cmd == 602 and s == 0:
+								# Typing Event
+								continue
+							
+							elif n == 1 and cmd == 601 and s == 0:
+								controls = parsedData["data"].get("controls", [])
+								for control in controls:
+									if control["content"]["act_type"] == "group":
+										
+										if control["content"]["act"] == "join_reject":
+											continue
+										
+										groupEventData = json.loads(control["content"]["data"]) if isinstance(control["content"]["data"], str) else control["content"]["data"]
+										groupEventType = _util.getGroupEventType(control["content"]["act"])
+										event_data = EventObject.fromDict(groupEventData)
+										event_type = groupEventType
+										[
+											loop.create_task(self.onEvent(event_data, event_type))
+											if thread else
+											await self.onEvent(event_data, event_type)
+										]
+								
+								continue
+							
+							elif cmd == 612:
+								reacts = parsedData["data"].get("reacts", [])
+								reactGroups = parsedData["data"].get("reactGroups", [])
+								
+								for react in reacts:
+									react["content"] = json.loads(react["content"])
+									msgObj = MessageObject.fromDict(react, None)
+									[
+										loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER))
+										if thread else
+										await self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.uidFrom) or msgObj.idTo), ThreadType.USER)
+									]
+								
+								for reactGroup in reactGroups:
+									reactGroup["content"] = json.loads(reactGroup["content"])
+									msgObj = MessageObject.fromDict(reactGroup, None)
+									[
+										loop.create_task(self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP))
+										if thread else
+										await self.onMessage(msgObj.msgId, str(int(msgObj.uidFrom) or self.uid), msgObj.content, msgObj, str(int(msgObj.idTo) or self.uid), ThreadType.GROUP)
+									]
+							
+							else:
+								continue
+						
+						except (websockets.ConnectionClosedOK, websockets.ConnectionClosedError, websockets.ConnectionClosed):
+							break
+						
+						except asyncio.TimeoutError:
+							await ws.ping()
+						
+						except Exception as e:
+							await self.onErrorCallBack(e)
+							break
 			
-			if self._start_fix:
-				logger.debug("Reconnecting websocket because of interruption...")
-				self._start_fix = False
-				await self._listen_ws(thread, reconnect)
-		
-		except Exception as e:
-			if str(e) == "sent 1000 (OK); then received 1000 (OK) NORMAL_CLOSURE":
-				pass
-					
-			else:
+			except asyncio.CancelledError:
+				self._condition.set()
+				await ws.close()
+				logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
+				break
+			
+			except Exception as e:
 				await self.onErrorCallBack(e)
-				await self._listen_ws(thread, reconnect)
+			
+			await asyncio.sleep(reconnect)
+	
 	
 	def startListening(self, delay=1, thread=False, type="websocket", reconnect=5):
 		"""Start listening from an external event loop.
@@ -4393,7 +4343,7 @@ class ZaloAPI(object):
 		self._listening = False
 		self._condition.set()
 	
-	def listen(self, delay=1, thread=False, type="websocket", run_forever=False, reconnect=5):
+	def listen(self, delay=1, thread=False, type="websocket", reconnect=5):
 		"""Initialize and runs the listening loop continually.
 		
 		Args:
@@ -4402,7 +4352,6 @@ class ZaloAPI(object):
 			type (str): Type of listening (Default: websocket)
 			reconnect (int): Delay interval when reconnecting
 		"""
-		self.run_forever = run_forever
 		self.startListening(delay, thread, type, reconnect)
 	
 	"""
