@@ -4406,7 +4406,7 @@ class ZaloAPI(object):
 							else:
 								continue
 						
-						except (websockets.ConnectionClosedOK, websockets.ConnectionClosedError, websockets.ConnectionClosed):
+						except (websockets.ConnectionClosedOK, websockets.ConnectionClosedError, websockets.exceptions.ConnectionClosedError, websockets.ConnectionClosed):
 							break
 						
 						except asyncio.TimeoutError:
