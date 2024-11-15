@@ -50,18 +50,23 @@ class State(object):
 			
 		if cls._cookies:
 			params = {
+				"zpw_ver": 647,
+				"type": 30,
 				"imei": imei,
+				"computer_name": "Web",
+				"ts": _util.now(),
+				"nretry": 0
 			}
 			try:
-				data = await cls._get("https://vrxx1337.vercel.app/zalo/api/login", params=params)
+				data = await cls._get("https://wpa.chat.zalo.me/api/login/getLoginInfo", params=params)
 				
 				if data.get("error_code") == 0:
 					cls._config = data.get("data")
 					
-					if cls._config.get("secret_key"):
-						cls._loggedin = True
-						cls.user_id = cls._config.get("send2me_id")
+					if cls._config.get("zpw_enk"):
 						cls.user_imei = imei
+						cls.user_id = cls._config.get("send2me_id")
+						cls._config["secret_key"] = cls._config.get("zpw_enk")
 						
 					else:
 						cls._loggedin = False
