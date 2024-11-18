@@ -14,7 +14,7 @@ pool = ThreadPoolExecutor()
 logger = Logging(theme="catppuccin-mocha", log_text_color="black")
 
 class ZaloAPI(object):
-	def __init__(self, phone, password, imei, session_cookies=None, user_agent=None, auto_login=True, prefix=""):
+	def __init__(self, phone, password, imei=None, cookies=None, user_agent=None, auto_login=True, prefix=""):
 		"""Initialize and log in the client.
 		
 		Args:
@@ -24,7 +24,7 @@ class ZaloAPI(object):
 			prefix (str): Bot prefix
 			auto_login (bool): Automatically log in when initializing ZaloAPI (Default: True)
 			user_agent (str): Custom user agent to use when sending requests. If `None`, user agent will be chosen from a premade list
-			session_cookies (dict): Cookies from a previous session (Required if logging in with cookies)
+			cookies (dict): Cookies from a previous session (Required if logging in with cookies)
 			
 		Raises:
 			ZaloLoginError: On failed login
@@ -42,8 +42,8 @@ class ZaloAPI(object):
 		
 		if auto_login:
 			if (
-				not session_cookies 
-				or not self.set_session(session_cookies) 
+				not cookies 
+				or not self.set_session(cookies) 
 				or not self.is_logged_in()
 			):
 				asyncio.run(self.login(phone, password, imei, user_agent))
@@ -59,43 +59,41 @@ class ZaloAPI(object):
 	@staticmethod
 	def check_commands_input(commands, method_name):
 		if not isinstance(commands, list) or not all(isinstance(item, str) for item in commands):
-			print(f'{method_name}: Commands filter should be list of strings (commands), unknown type supplied to the "commands" filter list. Not able to use the supplied type.')
-	
-	
+			raise ValueError(f'{method_name}: Commands filter should be a list of strings. Unknown type supplied to "commands".')
+
 	@staticmethod
 	def add_register_handler(func):
 		@functools.wraps(func)
 		async def wrapper(self, ctx):
 			await func(self, ctx)
+			
 			if ctx.author_id in self.conversation_handlers:
 				handler_info = self.conversation_handlers[ctx.author_id]
 				del self.conversation_handlers[ctx.author_id]
 				return await handler_info["handler"](ctx, *handler_info["args"], **handler_info["kwargs"])
 			
 			if str(ctx.message) in self.register_commands:
-				await self.register_commands[ctx.message](ctx)
+				await self.register_commands[str(ctx.message)](ctx)
 			
 			for funcheck, condition in self.register_messages:
 				if condition(str(ctx.message)):
 					await funcheck(ctx)
-			
+
 		return wrapper
 	
 	
-	def register_handler(self, func=None, msg=None, message=None, commands=None):
-		def decorator(func):
+	def register_handler(self, func=None, commands=None):
+		def decorator(handler_func):
 			if commands is not None:
 				self.check_commands_input(commands, "register_handler")
 				
-				if isinstance(commands, str):
-					self.register_commands[self.prefix + commands] = func
-				else:
-					self.register_commands.update({self.prefix + command: func for command in commands})
+				for command in commands:
+					self.register_commands[self.prefix + command] = handler_func
 			
-			if message or msg:
-				self.register_messages.append((func, message or msg))
-			
-			return func
+			if func:
+				self.register_messages.append((handler_func, func))
+
+			return handler_func
 		
 		return decorator
 	
@@ -199,23 +197,23 @@ class ZaloAPI(object):
 		"""
 		return await self._state.get_cookies()
 		
-	def set_session(self, session_cookies):
+	def set_session(self, cookies):
 		"""Load session cookies.
 		
 		Warning:
 			Error sending requests if session cookie is wrong
 			
 		Args:
-			session_cookies (dict): A dictionary containing session cookies
+			cookies (dict): A dictionary containing session cookies
 			
 		Returns:
-			Bool: False if ``session_cookies`` does not contain proper cookies
+			Bool: False if ``cookies`` does not contain proper cookies
 		"""
 		try:
-			if not isinstance(session_cookies, dict):
+			if not isinstance(cookies, dict):
 				return False
 			# Load cookies into current session
-			self._state.set_cookies(session_cookies)
+			self._state.set_cookies(cookies)
 			self.uid = self._state.user_id
 		except Exception as e:
 			print("Failed loading session")
@@ -4283,14 +4281,16 @@ class ZaloAPI(object):
 		
 		while not self._condition.is_set():
 			try:
-				
-				async with websockets.connect(url, extra_headers=headers, ping_interval=30) as ws:
+				async with connect(url, extra_headers=headers, ping_timeout=None) as ws:
 					loop = asyncio.get_event_loop()
 					await self.on_listening()
 					self._listening = True
+					
 					while not self._condition.is_set():
 						try:
+							
 							data = await asyncio.wait_for(ws.recv(), timeout=60)
+							
 							if not isinstance(data, bytes):
 								continue
 							
@@ -4406,26 +4406,37 @@ class ZaloAPI(object):
 							else:
 								continue
 						
-						except (websockets.ConnectionClosedOK, websockets.ConnectionClosedError, websockets.exceptions.ConnectionClosedError, websockets.ConnectionClosed):
-							break
+						except asyncio.CancelledError:
+							self._condition.set()
+							logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
+							pid = os.getpid()
+							os.kill(pid, signal.SIGTERM)
 						
 						except asyncio.TimeoutError:
-							await ws.ping()
+							break
+						
+						except (
+							websockets.ConnectionClosedOK,
+							websockets.ConnectionClosedError,
+							websockets.exceptions.ConnectionClosedOK,
+							websockets.exceptions.ConnectionClosedError
+						):
+							break
 						
 						except Exception as e:
+							self._listening = False
+							self._condition.set()
 							await self.on_error_callback(e)
 							break
 			
-			except asyncio.CancelledError:
+			except Exception as e:
+				self._listening = False
 				self._condition.set()
-				await ws.close()
-				logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
+				await self.on_error_callback(e)
 				break
 			
-			except Exception as e:
-				await self.on_error_callback(e)
-			
 			await asyncio.sleep(reconnect)
+			await self._listen_ws(thread, reconnect)
 	
 	
 	def startListening(self, delay=1, thread=False, type="websocket", reconnect=5):
