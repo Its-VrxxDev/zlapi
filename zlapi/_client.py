@@ -109,12 +109,12 @@ class ZaloAPI(object):
 		try:
 			if not isinstance(session_cookies, dict):
 				return False
-			# Load cookies into current session
+			
 			self._state.set_cookies(session_cookies)
 			self.user_id = self._state.user_id
 		except Exception as e:
-			print("Failed loading session")
 			return False
+		
 		return True
 	
 	def getSecretKey(self):
