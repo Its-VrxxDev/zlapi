@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
 
+import websocket
+
 from ..Async import _state
 from .. import _util
 from ..models import *
