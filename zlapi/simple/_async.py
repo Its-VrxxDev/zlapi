@@ -1,20 +1,19 @@
 # -*- coding: UTF-8 -*-
-import random
-import websockets
 
 from ..Async import _state
 from .. import _util
 from ..models import *
 from .._package import *
 from ..logging import Logging
-from websockets.client import connect
+from urllib.parse import urlencode, urlparse
 from concurrent.futures import ThreadPoolExecutor
-		
+
 pool = ThreadPoolExecutor()
 logger = Logging(theme="catppuccin-mocha", log_text_color="black")
 
+
 class ZaloAPI(object):
-	def __init__(self, phone, password, imei=None, cookies=None, user_agent=None, auto_login=True, prefix=""):
+	def __init__(self, phone=None, password=None, imei=None, cookies=None, user_agent=None, auto_login=True, prefix=""):
 		"""Initialize and log in the client.
 		
 		Args:
@@ -31,14 +30,16 @@ class ZaloAPI(object):
 			LoginMethodNotSupport: If method login not support
 		"""
 		self.prefix = prefix
+		self.user_id = None
+		self.cloud_id = None
+		
+		self.convers_handlers = {}
 		self.register_commands = {}
 		self.register_messages = []
-		self.conversation_handlers = {}
 		
-		self._state = _state.State()
 		self._condition = threading.Event()
+		self._state = _state.State()
 		self._listening = False
-		self._start_fix = True
 		
 		if auto_login:
 			if (
@@ -50,7 +51,7 @@ class ZaloAPI(object):
 	
 	def uid(self):
 		"""The ID of the client."""
-		return self.uid
+		return self.user_id
 	
 	"""
 	REGISTER COMMANDS EVENTS
@@ -60,16 +61,17 @@ class ZaloAPI(object):
 	def check_commands_input(commands, method_name):
 		if not isinstance(commands, list) or not all(isinstance(item, str) for item in commands):
 			raise ValueError(f'{method_name}: Commands filter should be a list of strings. Unknown type supplied to "commands".')
-
+	
+	
 	@staticmethod
 	def add_register_handler(func):
 		@functools.wraps(func)
 		async def wrapper(self, ctx):
 			await func(self, ctx)
 			
-			if ctx.author_id in self.conversation_handlers:
-				handler_info = self.conversation_handlers[ctx.author_id]
-				del self.conversation_handlers[ctx.author_id]
+			if ctx.author_id in self.convers_handlers:
+				handler_info = self.convers_handlers[ctx.author_id]
+				del self.convers_handlers[ctx.author_id]
 				return await handler_info["handler"](ctx, *handler_info["args"], **handler_info["kwargs"])
 			
 			if str(ctx.message) in self.register_commands:
@@ -103,7 +105,7 @@ class ZaloAPI(object):
 			print("Could not find message sender id, function not registered!")
 			return
 		else:
-			self.conversation_handlers[ctx.author_id] = {"handler": func, "args": args, "kwargs": kwargs}
+			self.convers_handlers[ctx.author_id] = {"handler": func, "args": args, "kwargs": kwargs}
 	
 	
 	def event(self, func):
@@ -119,7 +121,21 @@ class ZaloAPI(object):
 		
 		pool.submit(run_async)
 	
+	
+	def load_loop(self):
+		try:
+			loop = asyncio.get_event_loop()
+		except RuntimeError:
+			loop = asyncio.new_event_loop()
+			asyncio.set_event_loop(loop)
 		
+		except:
+			return False
+		
+		finally:
+			return loop
+	
+	
 	async def load_extension(self, name, package=None):
 		if package is None:
 			package = __package__
@@ -212,12 +228,12 @@ class ZaloAPI(object):
 		try:
 			if not isinstance(cookies, dict):
 				return False
-			# Load cookies into current session
+			
 			self._state.set_cookies(cookies)
-			self.uid = self._state.user_id
+			self.user_id = self._state.user_id
 		except Exception as e:
-			print("Failed loading session")
 			return False
+		
 		return True
 	
 	async def get_secret_key(self):
@@ -247,7 +263,7 @@ class ZaloAPI(object):
 		except:
 			return False
 	
-	async def login(self, phone, password, imei, user_agent=None):
+	async def login(self, phone=None, password=None, imei=None, user_agent=None):
 		"""Login the user, using ``phone`` and ``password``.
 			
 		If the user is already logged in, this will do a re-login.
@@ -262,10 +278,7 @@ class ZaloAPI(object):
 			ZaloLoginError: On failed login
 			LoginMethodNotSupport: If method login not support
 		"""
-		if not (phone and password):
-			raise ZaloUserError("Phone and password not set")
-		
-		await self.on_logging_in()
+		await self.on_logging_in("using Cookies") if await self.get_session() else await self.on_logging_in(phone)
 		
 		await self._state.login(
 			phone,
@@ -275,10 +288,10 @@ class ZaloAPI(object):
 		)
 		try:
 			self._imei = self._state.user_imei
-			self.uid = (await self.fetch_account_info()).profile.get("userId", self._state.user_id)
+			self.user_id = (await self.fetch_account_info()).profile.get("userId")
+			self.cloud_id = self._state.cloud_id
 		except:
 			self._imei = None
-			self.uid = self._state.user_id
 		
 		await self.on_logged_in(self._state._config.get("phone_number"))
 		
@@ -341,10 +354,10 @@ class ZaloAPI(object):
 		params["params"] = self._encode(params["params"])
 		
 		data = await self._post(url, params=params, data=files)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(data["data"])
-			results = results.get("data") if results.get("error_code") == 0 else results
+			results = results.get("data") if not results.get("error_code") else results
 			if results == None:
 				results = {"error_code": 1337, "error_message": "Data is None"}
 			
@@ -390,10 +403,10 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-profile-wpa.chat.zalo.me/api/social/profile/me-v2", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
-			results = results.get("data") if results.get("error_code") == 0 else results
+			results = results.get("data") if not results.get("error_code") else results
 			if results == None:
 				results = {"error_code": 1337, "error_message": "Data is None"}
 			
@@ -441,7 +454,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-friend-wpa.chat.zalo.me/api/friend/profile/get", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -500,10 +513,10 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post("https://tt-profile-wpa.chat.zalo.me/api/social/friend/getprofiles/v2", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
-			results = results.get("data") if results.get("error_code") == 0 else results
+			results = results.get("data") if not results.get("error_code") else results
 			if results == None:
 				results = {"error_code": 1337, "error_message": "Data is None"}
 			
@@ -554,10 +567,10 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post("https://tt-group-wpa.chat.zalo.me/api/group/getmg-v2", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
-			results = results.get("data") if results.get("error_code") == 0 else results
+			results = results.get("data") if not results.get("error_code") else results
 			if results == None:
 				results = {"error_code": 1337, "error_message": "Data is None"}
 			
@@ -598,7 +611,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://profile-wpa.chat.zalo.me/api/social/friend/getfriends", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			datas = []
@@ -629,10 +642,10 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/getlg/v4", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
-			results = results.get("data") if results.get("error_code") == 0 else results
+			results = results.get("data") if not results.get("error_code") else results
 			if results == None:
 				results = {"error_code": 1337, "error_message": "Data is None"}
 			
@@ -676,10 +689,10 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-convers-wpa.chat.zalo.me/api/preloadconvers/get-last-msgs", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
-			results = results.get("data") if results.get("error_code") == 0 else results
+			results = results.get("data") if not results.get("error_code") else results
 			if results == None:
 				results = {"error_code": 1337, "error_message": "Data is None"}
 			
@@ -723,7 +736,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-cm.chat.zalo.me/api/cm/getrecentv2", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = json.loads(results.get("data")) if results.get("error_code") == 0 else results
@@ -758,10 +771,10 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://groupboard-wpa.chat.zalo.me/api/board/list", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
-			results = results.get("data") if results.get("error_code") == 0 else results
+			results = results.get("data") if not results.get("error_code") else results
 			if results == None:
 				results = {"error_code": 1337, "error_message": "Data is None"}
 			
@@ -906,7 +919,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-profile-wpa.chat.zalo.me/api/social/profile/update", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -954,7 +967,7 @@ class ZaloAPI(object):
 			"zpw_type": 30,
 			"params": self._encode({
 				"avatarSize": 120,
-				"clientId": str(self.uid) + _util.formatTime("%H:%M %d/%m/%Y"),
+				"clientId": str(self.user_id) + _util.formatTime("%H:%M %d/%m/%Y"),
 				"language": language,
 				"metaData": json.dumps({
 					"origin": {
@@ -971,7 +984,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-files-wpa.chat.zalo.me/api/profile/upavatar", params=params, data=files)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1032,7 +1045,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-friend-wpa.chat.zalo.me/api/friend/sendreq", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1078,7 +1091,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-friend-wpa.chat.zalo.me/api/friend/accept", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1125,7 +1138,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-friend-wpa.chat.zalo.me/api/friend/feed/block", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1170,7 +1183,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-friend-wpa.chat.zalo.me/api/friend/block", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1215,7 +1228,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-friend-wpa.chat.zalo.me/api/friend/unblock", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1290,7 +1303,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/create/v2", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1347,7 +1360,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-files-wpa.chat.zalo.me/api/group/upavatar", params=params, data=files)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1397,7 +1410,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-group-wpa.chat.zalo.me/api/group/updateinfo", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1518,7 +1531,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/setting/update", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1566,7 +1579,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/change-owner", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1626,7 +1639,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-group-wpa.chat.zalo.me/api/group/invite/v2", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1679,7 +1692,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-group-wpa.chat.zalo.me/api/group/kickout", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1729,7 +1742,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/blockedmems/add", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1779,7 +1792,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/blockedmems/remove", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1831,7 +1844,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/admins/add", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1883,7 +1896,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/admins/remove", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -1941,7 +1954,7 @@ class ZaloAPI(object):
 			payload["params"]["params"] = json.dumps({
 				"client_msg_id": pinMsg.cliMsgId,
 				"global_msg_id": pinMsg.msgId,
-				"senderUid": str(int(pinMsg.uidFrom) or self.uid),
+				"senderUid": str(int(pinMsg.uidFrom) or self.user_id),
 				"senderName": pinMsg.dName,
 				"title": pinMsg.content,
 				"msg_type": _util.getClientMessageType(pinMsg.msgType)
@@ -1952,7 +1965,7 @@ class ZaloAPI(object):
 			payload["params"]["params"] = json.dumps({
 				"client_msg_id": pinMsg.cliMsgId,
 				"global_msg_id": pinMsg.msgId,
-				"senderUid": str(int(pinMsg.uidFrom) or self.uid),
+				"senderUid": str(int(pinMsg.uidFrom) or self.user_id),
 				"senderName": pinMsg.dName,
 				"msg_type": _util.getClientMessageType(pinMsg.msgType)
 			})
@@ -1962,7 +1975,7 @@ class ZaloAPI(object):
 			payload["params"]["params"] = json.dumps({
 				"client_msg_id": pinMsg.cliMsgId,
 				"global_msg_id": pinMsg.msgId,
-				"senderUid": str(int(pinMsg.uidFrom) or self.uid),
+				"senderUid": str(int(pinMsg.uidFrom) or self.user_id),
 				"senderName": pinMsg.dName,
 				"thumb": pinMsg.content.thumb,
 				"title": pinMsg.content.description,
@@ -1974,7 +1987,7 @@ class ZaloAPI(object):
 			payload["params"]["params"] = json.dumps({
 				"client_msg_id": pinMsg.cliMsgId,
 				"global_msg_id": pinMsg.msgId,
-				"senderUid": str(int(pinMsg.uidFrom) or self.uid),
+				"senderUid": str(int(pinMsg.uidFrom) or self.user_id),
 				"senderName": pinMsg.dName,
 				"extra": json.dumps({
 					"id": pinMsg.content.id,
@@ -1990,7 +2003,7 @@ class ZaloAPI(object):
 			payload["params"]["params"] = json.dumps({
 				"client_msg_id": pinMsg.cliMsgId,
 				"global_msg_id": pinMsg.msgId,
-				"senderUid": str(int(pinMsg.uidFrom) or self.uid),
+				"senderUid": str(int(pinMsg.uidFrom) or self.user_id),
 				"senderName": pinMsg.dName,
 				"href": pinMsg.content.href,
 				"thumb": pinMsg.content.thumb or "",
@@ -2020,7 +2033,7 @@ class ZaloAPI(object):
 			payload["params"]["params"] = json.dumps({
 				"client_msg_id": pinMsg.cliMsgId,
 				"global_msg_id": pinMsg.msgId,
-				"senderUid": str(int(pinMsg.uidFrom) or self.uid),
+				"senderUid": str(int(pinMsg.uidFrom) or self.user_id),
 				"senderName": pinMsg.dName,
 				"msg_type": _util.getClientMessageType(pinMsg.msgType),
 				"title": pinMsg.content.title or pinMsg.content.description
@@ -2032,7 +2045,7 @@ class ZaloAPI(object):
 			payload["params"]["params"] = json.dumps({
 				"client_msg_id": pinMsg.cliMsgId,
 				"global_msg_id": pinMsg.msgId,
-				"senderUid": str(int(pinMsg.uidFrom) or self.uid),
+				"senderUid": str(int(pinMsg.uidFrom) or self.user_id),
 				"senderName": pinMsg.dName,
 				"title": pinMsg.content.title,
 				"extra": json.dumps({
@@ -2053,7 +2066,7 @@ class ZaloAPI(object):
 			payload["params"]["params"] = json.dumps({
 				"client_msg_id": pinMsg.cliMsgId,
 				"global_msg_id": pinMsg.msgId,
-				"senderUid": str(int(pinMsg.uidFrom) or self.uid),
+				"senderUid": str(int(pinMsg.uidFrom) or self.user_id),
 				"senderName": pinMsg.dName,
 				"thumb": pinMsg.content.thumb,
 				"msg_type": _util.getClientMessageType(pinMsg.msgType)
@@ -2061,7 +2074,7 @@ class ZaloAPI(object):
 		
 		payload["params"] = self._encode(payload["params"])
 		data = await self._post("https://groupboard-wpa.chat.zalo.me/api/board/topic/createv2", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2110,7 +2123,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://groupboard-wpa.chat.zalo.me/api/board/unpinv2", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2165,7 +2178,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-group-wpa.chat.zalo.me/api/group/deletemsg", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2207,7 +2220,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/pending-mems/list", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2259,7 +2272,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/group/pending-mems/review", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2301,7 +2314,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._get("https://tt-group-wpa.chat.zalo.me/api/poll/detail", params=params)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2384,7 +2397,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post("https://tt-group-wpa.chat.zalo.me/api/poll/create", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2431,7 +2444,7 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-group-wpa.chat.zalo.me/api/poll/end", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2478,10 +2491,10 @@ class ZaloAPI(object):
 		}
 		
 		data = await self._post("https://tt-group-wpa.chat.zalo.me/api/group/disperse", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
-			results = results.get("data") if results.get("error_code") == 0 else results
+			results = results.get("data") if not results.get("error_code") else results
 			if results == None:
 				results = {"error_code": 1337, "error_message": "Data is None"}
 			
@@ -2520,7 +2533,7 @@ class ZaloAPI(object):
 		Raises:
 			ZaloAPIException: If request failed
 		"""
-		thread_id = str(int(thread_id) or self.uid)
+		thread_id = str(int(thread_id) or self.user_id)
 		if message.mention:
 			return await self.send_mention_message(message, thread_id, ttl)
 		else:
@@ -2577,7 +2590,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2600,7 +2613,7 @@ class ZaloAPI(object):
 		error_message = data.get("error_message") or data.get("data")
 		raise ZaloAPIException(f"Error #{error_code} when sending requests: {error_message}")
 	
-	async def reply_message(self, message, replyMsg, thread_id, thread_type, ttl=0):
+	async def reply_to(self, replyMsg, message, thread_id, thread_type, ttl=0):
 		"""Reply message in group by ID.
 			
 		Args:
@@ -2626,7 +2639,7 @@ class ZaloAPI(object):
 			"params": {
 				"message": message.text,
 				"clientId": _util.now(),
-				"qmsgOwner": str(int(replyMsg.uidFrom) or self.uid),
+				"qmsgOwner": str(int(replyMsg.uidFrom) or self.user_id),
 				"qmsgId": replyMsg.msgId,
 				"qmsgCliId": replyMsg.cliMsgId,
 				"qmsgType": _util.getClientMessageType(replyMsg.msgType),
@@ -2661,7 +2674,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2722,7 +2735,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post("https://tt-group-wpa.chat.zalo.me/api/group/mention", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2767,7 +2780,7 @@ class ZaloAPI(object):
 			"params": {
 				"msgId": str(msgId),
 				"cliMsgIdUndo": str(cliMsgId),
-				"clientId": _util.now()
+				"clientId": _util.now(),
 			} 
 		}
 		
@@ -2785,7 +2798,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2860,7 +2873,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -2939,7 +2952,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3040,7 +3053,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3150,7 +3163,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3227,7 +3240,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3333,7 +3346,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3430,7 +3443,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3587,7 +3600,7 @@ class ZaloAPI(object):
 		params["params"] = self._encode(params["params"])
 		
 		data = await self._post(url, params=params, data=files)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3657,7 +3670,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3766,7 +3779,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3852,7 +3865,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3913,7 +3926,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post("https://tt-profile-wpa.chat.zalo.me/api/report/abuse-v2", params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -3982,7 +3995,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			results = results.get("data") if results.get("data") else results
@@ -4043,7 +4056,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			results = self._decode(results)
 			return True
@@ -4113,7 +4126,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			context = ContextObject.fromDict({"msgId": msgId, "thread_id": thread_id, "thread_type": thread_type})
 			await self.on_message_delivered(context)
@@ -4188,7 +4201,7 @@ class ZaloAPI(object):
 		payload["params"] = self._encode(payload["params"])
 		
 		data = await self._post(url, params=params, data=payload)
-		results = data.get("data") if data.get("error_code") == 0 else None
+		results = data.get("data") if not data.get("error_code") else None
 		if results:
 			context = ContextObject.fromDict({"msgId": msgId, "thread_id": thread_id, "thread_type": thread_type})
 			await self.on_marked_seen(context)
@@ -4202,277 +4215,218 @@ class ZaloAPI(object):
 	LISTEN METHODS
 	"""
 	
-	async def _listen_req(self, delay=1, reconnect=5):
-		self._condition.clear()
-		HasRead = set()
-		
-		while not self._condition.is_set():
-			try:
-				await self.on_listening()
-				self._listening = True
-				
-				while not self._condition.is_set():
-					ListenTime = int((time.time() - 10) * 1000)
-					
-					if len(HasRead) > 10000000:
-						HasRead.clear()
-					
-					messages = await self.get_last_msgs()
-					groupmsg = messages.groupMsgs
-					messages = messages.msgs
-					
-					loop = asyncio.get_event_loop()
-					for message in messages + groupmsg:
-						if int(message["ts"]) >= ListenTime and message["msgId"] not in HasRead:
-							
-							HasRead.add(message["msgId"])
-							msgObj = MessageObject.fromDict(message, None)
-							
-							if message in messages:
-								
-								context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.uidFrom) or msgObj.idTo), "thread_type": ThreadType.USER}
-								context = ContextObject.fromDict(context)
-								loop.create_task(self.onMessage(context))
-							
-							else:
-								
-								context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.idTo) or msgObj.idTo), "thread_type": ThreadType.GROUP}
-								context = ContextObject.fromDict(context)
-								loop.create_task(self.onMessage(context))
-					
-					await asyncio.sleep(delay)
-			
-			except asyncio.CancelledError:
-				self._condition.set()
-				logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
-				break
-			
-			except Exception as e:
-				await self.on_error_callback(e)
-			
-			await asyncio.sleep(reconnect)
-	
-	
-	async def _listen_ws(self, thread=False, reconnect=5):
+	async def _listen(self, thread=False, reconnect=5):
 		self._condition.clear()
 		params = {"zpw_ver": 647, "zpw_type": 30, "t": _util.now()}
-		url = self._state._config["zpw_ws"][0] + "?" + urllib.parse.urlencode(params)
-		
+		url = self._state._config["zpw_ws"][0] + "?" + urlencode(params)
+
 		user_agent = self._state._headers.get("User-Agent") or _util.HEADERS["User-Agent"]
 		raw_cookies = _util.dict_to_raw_cookies(await self._state.get_cookies())
-		
+
 		if not raw_cookies:
 			raise ZaloUserError("Unable to load cookies! Probably due to incorrect cookie format (cookies must be dict)")
-		
+
 		headers = {
 			"Accept-Encoding": "gzip, deflate, br, zstd",
 			"Accept-Language": "en-US,en;q=0.9",
 			"Cache-Control": "no-cache",
 			"Connection": "Upgrade",
-			"Host": urllib.parse.urlparse(url).netloc,
+			"Host": urlparse(url).netloc,
 			"Origin": "https://chat.zalo.me",
-			"Pargma": "no-cache",
-			"Sec-Websocket-Extensions": "permessage-deflate; client_max_window_bits",
-			"Sec-Websocket-Version": "13",
+			"Pragma": "no-cache",
+			"Sec-WebSocket-Extensions": "permessage-deflate; client_max_window_bits",
+			"Sec-WebSocket-Version": "13",
 			"Upgrade": "websocket",
 			"User-Agent": user_agent,
-			"Cookie": raw_cookies
+			"Cookie": raw_cookies,
 		}
+
+		def onOpenCallback(ws):
+			self.listening = True
+			asyncio.run(self.on_listening())
 		
-		while not self._condition.is_set():
-			try:
-				async with connect(url, extra_headers=headers, ping_timeout=None) as ws:
-					loop = asyncio.get_event_loop()
-					await self.on_listening()
-					self._listening = True
-					
-					while not self._condition.is_set():
-						try:
-							
-							data = await asyncio.wait_for(ws.recv(), timeout=60)
-							
-							if not isinstance(data, bytes):
-								continue
-							
-							encodedHeader = data[:4]
-							n, cmd, s = _util.getHeader(encodedHeader)
-							
-							dataToDecode = data[4:]
-							decodedData = dataToDecode.decode("utf-8")
-							if not decodedData:
-								continue
-							
-							parsed = json.loads(decodedData)
-							if n == 1 and cmd == 1 and s == 1 and "key" in parsed:
-								self.ws_key = parsed["key"]
-								continue
-							
-							if not hasattr(self, "ws_key"):
-								logger.error("Unable to decrypt data because key not found")
-								continue
-							
-							parsedData = _util.zws_decode(parsed, self.ws_key)
-							if n == 1 and cmd == 3000 and s == 0:
-								logger.warning("Another connection is opened, closing this one")
-								await ws.close()
-							
-							elif n == 1 and cmd == 501 and s == 0:
-								userMsgs = parsedData["data"]["msgs"]
-								
-								for message in userMsgs:
-									msgObj = MessageObject.fromDict(message, None)
-									context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.uidFrom) or msgObj.idTo), "thread_type": ThreadType.USER}
-									context = ContextObject.fromDict(context)
-									[
-										loop.create_task(self.onMessage(context))
-										if thread else
-										await self.onMessage(context)
-									]
-							
-							elif n == 1 and cmd == 521 and s == 0:
-								groupMsgs = parsedData["data"]["groupMsgs"]
-								
-								for message in groupMsgs:
-									
-									try:
-										messages = (await self.get_recent_group(message["idTo"]))["groupMsgs"]
-										message = next((msg for msg in messages if msg["msgId"] == message["msgId"]), message)
-									except:
-										pass
-									
-									msgObj = MessageObject.fromDict(message, None)
-									context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.idTo) or msgObj.idTo), "thread_type": ThreadType.GROUP}
-									context = ContextObject.fromDict(context)
-									[
-										loop.create_task(self.onMessage(context))
-										if thread else
-										await self.onMessage(context)
-									]
-							
-							elif n == 1 and cmd in [502, 522, 504, 524] and s == 0:
-								# Delivereds, Seen, Clear Unread, ...
-								continue
-							
-							elif n == 1 and cmd == 602 and s == 0:
-								# Typing Event
-								continue
-							
-							elif n == 1 and cmd == 601 and s == 0:
-								controls = parsedData["data"].get("controls", [])
-								for control in controls:
-									if control["content"]["act_type"] == "group":
-										
-										if control["content"]["act"] == "join_reject":
-											continue
-										
-										groupEventData = json.loads(control["content"]["data"]) if isinstance(control["content"]["data"], str) else control["content"]["data"]
-										groupEventType = _util.getGroupEventType(control["content"]["act"])
-										context = {"event_data": groupEventData, "event_type": groupEventType}
-										context = EventObject.fromDict(context)
-										[
-											loop.create_task(self.on_event(context))
-											if thread else
-											await self.on_event(context)
-										]
-								
-								continue
-							
-							elif cmd == 612:
-								reacts = parsedData["data"].get("reacts", [])
-								reactGroups = parsedData["data"].get("reactGroups", [])
-								
-								for react in reacts:
-									react["content"] = json.loads(react["content"])
-									msgObj = MessageObject.fromDict(react, None)
-									context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.uidFrom) or msgObj.idTo), "thread_type": ThreadType.USER}
-									context = ContextObject.fromDict(context)
-									[
-										loop.create_task(self.onMessage(context))
-										if thread else
-										await self.onMessage(context)
-									]
-								
-								for reactGroup in reactGroups:
-									reactGroup["content"] = json.loads(reactGroup["content"])
-									msgObj = MessageObject.fromDict(reactGroup, None)
-									context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.uid), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.idTo) or msgObj.idTo), "thread_type": ThreadType.GROUP}
-									context = ContextObject.fromDict(context)
-									[
-										loop.create_task(self.onMessage(context))
-										if thread else
-										await self.onMessage(context)
-									]
-							
-							else:
-								continue
-						
-						except asyncio.CancelledError:
-							self._condition.set()
-							logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
-							pid = os.getpid()
-							os.kill(pid, signal.SIGTERM)
-						
-						except asyncio.TimeoutError:
-							break
-						
-						except (
-							websockets.ConnectionClosedOK,
-							websockets.ConnectionClosedError,
-							websockets.exceptions.ConnectionClosedOK,
-							websockets.exceptions.ConnectionClosedError
-						):
-							break
-						
-						except Exception as e:
-							self._listening = False
-							self._condition.set()
-							await self.on_error_callback(e)
-							break
+		
+		def onCloseCallback(ws, status_code, msg):
+			pass
+		
+		
+		def onErrorCallback(ws, error):
+			asyncio.run(self.on_error_callback(error))
+		
+		
+		def onMessageCallback(ws, message):
+			asyncio.run(self._handler_listen(message))
+		
+		
+		ws = websocket.WebSocketApp(
+			url,
+			header=headers,
+			on_message=onMessageCallback,
+			on_error=onErrorCallback,
+			on_close=onCloseCallback,
+			on_open=onOpenCallback
+		)
+		
+		self.ws = ws
+		self.thread = thread
+		
+		def ws_run_forever(reconnect=reconnect):
+			if not isinstance(reconnect, int):
+				reconnect = 5
 			
-			except Exception as e:
-				self._listening = False
-				self._condition.set()
-				await self.on_error_callback(e)
-				break
+			ws.run_forever(reconnect=reconnect)
+		
+		try:
+			await asyncio.get_event_loop().run_in_executor(None, ws_run_forever)
+		
+		except asyncio.CancelledError:
+			ws.close()
+			logger.warning("Stop Listen Because KeyboardInterrupt Exception!")
+			pid = os.getpid()
+			os.kill(pid, signal.SIGTERM)
+	
+	
+	async def _handler_listen(self, data):
+		loop = self.load_loop()
+		
+		if not isinstance(data, bytes):
+			return
+		
+		try:
+			encoded_header = data[:4]
+			version, cmd, subCmd = _util.getHeader(encoded_header)
+
+			data_to_decode = data[4:]
+			decoded_data = data_to_decode.decode("utf-8")
+			if not decoded_data or "eventId" in decoded_data:
+				return
+			
+			if not isinstance(decoded_data, dict):
+				parsed = json.loads(decoded_data)
+			
+			if version == 1 and cmd == 1 and subCmd == 1 and "key" in parsed:
+				self.ws_key = parsed["key"]
+				
+				if hasattr(self, "ping_interval") and self.ping_interval:
+					self.ping_interval.cancel()
+				
+				self.ws_ping_scheduler()
+				return
+			
+			if not hasattr(self, "ws_key"):
+				return logger.error("Unable to decrypt data because key not found")
+			
+			parsed_data = _util.zws_decode(parsed, self.ws_key)
+			if version == 1 and cmd == 3000 and subCmd == 0:
+				logger.warning("Another connection is opened, closing this one")
+				self.ws.close()
+				pid = os.getpid()
+				os.kill(pid, signal.SIGTERM)
+			
+			elif version == 1 and cmd == 501 and subCmd == 0:
+				user_msgs = parsed_data["data"]["msgs"]
+				for message in user_msgs:
+					msg_obj = MessageObject.fromDict(message, None)
+					context = ContextObject.fromDict({
+						"message_id": msg_obj.msgId,
+						"author_id": str(int(msg_obj.uidFrom) or self.user_id),
+						"message": msg_obj.content,
+						"message_object": msg_obj,
+						"thread_id": str(int(msg_obj.uidFrom) or self.user_id),
+						"thread_type": ThreadType.USER,
+					})
+					
+					await self.onMessage(context)
+			
+			elif version == 1 and cmd == 521 and subCmd == 0:
+				group_msgs = parsed_data["data"]["groupMsgs"]
+				for message in group_msgs:
+					msg_obj = MessageObject.fromDict(message, None)
+					context = ContextObject.fromDict({
+						"message_id": msg_obj.msgId,
+						"author_id": str(int(msg_obj.uidFrom) or self.user_id),
+						"message": msg_obj.content,
+						"message_object": msg_obj,
+						"thread_id": str(int(msg_obj.idTo) or self.user_id),
+						"thread_type": ThreadType.GROUP,
+					})
+					
+					await self.onMessage(context)
+			
+			elif version == 1 and cmd == 601 and subCmd == 0:
+				controls = parsed_data["data"].get("controls", [])
+				for control in controls:
+					if control["content"]["act_type"] == "group":
+						
+						if control["content"]["act"] == "join_reject":
+							continue
+						
+						groupEventData = json.loads(control["content"]["data"]) if isinstance(control["content"]["data"], str) else control["content"]["data"]
+						groupEventType = _util.getGroupEventType(control["content"]["act"])
+						context = {"event_data": groupEventData, "event_type": groupEventType}
+						context = EventObject.fromDict(context)
+						[
+							self.run_in_thread(self.on_event, context)
+							if self.thread else
+							await self.on_event(context)
+						]
+			
+			elif cmd == 612:
+				reacts = parsed_data["data"].get("reacts", [])
+				reactGroups = parsed_data["data"].get("reactGroups", [])
+				
+				for react in reacts:
+					react["content"] = json.loads(react["content"])
+					msgObj = MessageObject.fromDict(react, None)
+					context = {"message_id": msgObj.msgId, "author_id": str(int(msgObj.uidFrom) or self.user_id), "message": msgObj.content, "message_object": msgObj, "thread_id": str(int(msgObj.uidFrom) or self.user_id), "thread_type": ThreadType.USER}
+					context = ContextObject.fromDict(context)
+					[
+						self.run_in_thread(self.onMessage, context)
+						if self.thread else
+						await self.onMessage(context)
+					]
+				
+				for reactGroup in reactGroups:
+					reactGroup["content"] = json.loads(reactGroup["content"])
+					msgObj = MessageObject.fromDict(reactGroup, None)
+					context = {"message_id": msgObj.msgId, "author_id": int(msgObj.uidFrom) or self.user_id, "message": msgObj.content, "message_object": msgObj, "thread_id": int(msgObj.idTo) or self.user_id, "thread_type": ThreadType.GROUP}
+					context = ContextObject.fromDict(context)
+					[
+						self.run_in_thread(self.onMessage, context)
+						if self.thread else
+						await self.onMessage(context)
+					]
+		
+		except websocket.WebSocketConnectionClosedException:
+			if not isinstance(reconnect, int):
+				reconnect = 5
 			
 			await asyncio.sleep(reconnect)
-			await self._listen_ws(thread, reconnect)
+			self._listen(thread, reconnect)
+		
+		except Exception as e:
+			await self.on_error_callback(e)
 	
 	
-	def startListening(self, delay=1, thread=False, type="websocket", reconnect=5):
-		"""Start listening from an external event loop.
+	def ws_ping_scheduler(self):
+		payload = {
+			"version": 1,
+			"cmd": 2,
+			"subCmd": 1,
+			"data": {"eventId": int(time.time() * 1000)}
+		}
 		
-		Args:
-			delay (int): Delay time each time fetching a message
-			test (bool): Listen `test` or `main` mode, Default: False (Main Mode)
-			thread (bool): Handle messages within the thread (Default: False)
-			type (str): Type of listening (Default: websocket)
+		encoded_data = json.dumps(payload["data"]).encode()
+		data_length = len(encoded_data)
+		header = struct.pack("<BIB", payload["version"], payload["cmd"], payload["subCmd"])
+		data = header + encoded_data
+		self.ws.send(data, websocket.ABNF.OPCODE_BINARY)
 		
-		Raises:
-			ZaloAPIException: If request failed
-		"""
-		self._condition.clear()
-		if str(type).lower() == "websocket":
-			
-			if self._state._config.get("zpw_ws"):
-				asyncio.run(self._listen_ws(thread))
-				
-			else:
-				logger.debug("WebSocket url not found. Listen will switch to `requests` mode")
-				asyncio.run(self._listen_req(delay))
-		
-		elif str(type).lower() == "requests":
-			asyncio.run(self._listen_req(delay))
-		
-		else:
-			raise ZaloUserError("Invalid listen type, only `websocket` or `requests`")
+		self.ping_interval = threading.Timer(3 * 60, self.ws_ping_scheduler)
+		self.ping_interval.start()
 	
-	def stopListening(self):
-		"""Stop the listening loop."""
-		self._listening = False
-		self._condition.set()
 	
-	def listen(self, delay=1, thread=False, type="websocket", reconnect=5):
+	def listen(self, thread=False, reconnect=5):
 		"""Initialize and runs the listening loop continually.
 		
 		Args:
@@ -4481,23 +4435,24 @@ class ZaloAPI(object):
 			type (str): Type of listening (Default: websocket)
 		
 		"""
-		self.startListening(delay, thread, type, reconnect)
+		asyncio.run(self._listen(thread, reconnect))
 	
 	"""
 	END LISTEN METHODS
 	"""
 	
+	
 	"""
 	EVENTS
 	"""
 	
-	async def on_logging_in(self, phone=None):
+	async def on_logging_in(self, type=None):
 		"""Called when the client is logging in.
 			
 		Args:
-			phone: The phone number of the client
+			type: The phone number or cookies of the client
 		"""
-		logger.debug("Logging in {}...".format(phone))
+		logger.debug("Logging in {}...".format(type))
 	
 	
 	async def on_logged_in(self, phone=None):
@@ -4558,6 +4513,7 @@ class ZaloAPI(object):
 		"""
 		logger.info("{} from {} in {}".format(ctx.message, ctx.thread_id, ctx.thread_type.name))
 	
+	
 	async def on_event(self, ctx):
 		"""Called when the client listening, and some events occurred.
 
@@ -4566,6 +4522,7 @@ class ZaloAPI(object):
 			event_type (EventType/GroupEventType): Event Type
 		"""
 	
+	
 	async def on_error_callback(self, error, ts=int(time.time())):
 		"""Called when the module has some error.
 		
@@ -4573,8 +4530,8 @@ class ZaloAPI(object):
 			error: Description of the error
 			ts: A timestamp of the error (Default: auto)
 		"""
-		logger.error(f"An error occurred at {ts}: {error}")
-		print(traceback.format_exc())
+		logger.error(f"An error occurred at {ts}: {error}\n{traceback.format_exc()}")
+	
 	
 	@add_register_handler
 	async def onMessage(self, ctx):
